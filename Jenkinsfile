@@ -1,5 +1,3 @@
-// Jenkinsfile for Cybersecurity Website DevOps Pipeline
-
 pipeline {
     agent any // Run on any available agent
 
@@ -48,9 +46,7 @@ pipeline {
             steps {
                 script {
                     echo 'Running SonarQube analysis...'
-                    // This will inject SonarQube server environment variables
                     withSonarQubeEnv('SonarQube Local') {
-                        // Inject token securely from Jenkins credentials store
                         withCredentials([string(credentialsId: 'sonarqube-server-token', variable: 'SONAR_TOKEN')]) {
                             bat """
                             "${SONAR_SCANNER_HOME}\\bin\\sonar-scanner.bat" ^
@@ -70,13 +66,13 @@ pipeline {
             steps {
                 script {
                     echo 'Running OWASP Dependency-Check for security analysis...'
-                    dependencyCheck additionalArguments: '--project "Cybersecurity Website" --format HTML --scan .', odcInstallation: 'DependencyCheck'
+                    dependencyCheck additionalArguments: '--project "Cybersecurity Website" --format HTML --scan . --out target', odcInstallation: 'Dependency-Check'
                     echo 'OWASP Dependency-Check complete. Check the generated HTML report.'
                     publishHTML(target: [
                         allowMissing: false,
                         alwaysLinkToLastBuild: false,
                         keepAll: true,
-                        reportDir: 'target', // default output directory of Dependency-Check
+                        reportDir: 'target',
                         reportFiles: 'dependency-check-report.html',
                         reportName: 'Dependency-Check Report'
                     ])
@@ -96,21 +92,17 @@ pipeline {
             }
         }
 
-        stage('Release') { // Promote the application to a production environment
+        stage('Release') {
             steps {
                 echo 'Simulating promotion to production...'
-                // For a higher grade, this would involve pushing the Docker image to a registry (e.g., Docker Hub, AWS ECR)
-                // and then deploying to a production server or cloud environment (e.g., AWS Elastic Beanstalk, Kubernetes).
-                // You would typically use specific tools for release management here.
+                // Here you can add Docker image push commands to a registry and deployment to production
             }
         }
 
-        stage('Monitoring') { // Monitor the application in production
+        stage('Monitoring') {
             steps {
                 echo 'Simulating monitoring and alerting...'
-                // For a higher grade, this would involve integrating with monitoring tools like Datadog, New Relic, or Prometheus.
-                // You would set up live metrics, meaningful alert rules, and potentially simulate incidents.
-                // This stage often doesn't have direct commands in the Jenkinsfile but rather triggers external monitoring setups.
+                // Here you can integrate real monitoring tools or scripts
             }
         }
     }
@@ -118,7 +110,7 @@ pipeline {
     post {
         always {
             echo 'Pipeline finished.'
-            cleanWs() // Clean workspace
+            cleanWs() // Clean workspace after build
         }
         success {
             echo 'Pipeline completed successfully!'
