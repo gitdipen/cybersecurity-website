@@ -70,7 +70,7 @@ pipeline {
             steps {
                 script {
                     echo 'Running OWASP Dependency-Check for security analysis...'
-                    dependencyCheck additionalArguments: '--project "Cybersecurity Website" --format HTML --scan .', odcInstallation: 'DependencyCheck'
+                    dependencyCheck additionalArguments: '--project "Cybersecurity Website" --format HTML --scan .', odcInstallation: 'Dependency-Check'
                     echo 'OWASP Dependency-Check complete. Check the generated HTML report.'
                     publishHTML(target: [
                         allowMissing: false,
