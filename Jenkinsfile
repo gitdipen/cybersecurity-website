@@ -49,18 +49,27 @@ pipeline {
         }
 
         stage('Code Quality') { // Configure Jenkins to run code quality analysis on your code [cite: 15]
+            environment {
+                // IMPORTANT: Explicitly set SONARQUBE_URL to your SonarQube server's address.
+                // This is crucial as env.SONARQUBE_URL was previously undefined in the bat command.
+                SONARQUBE_URL = 'http://localhost:9000' // **UPDATE THIS IF YOUR SONARQUBE URL IS DIFFERENT**
+            }
             steps {
                 script {
                     echo 'Running SonarQube analysis...'
                     // This stage focuses on the structure, style, and maintainability of your codebase[cite: 16].
                     // Tools like SonarQube or CodeClimate can be used to detect issues like code duplication and code smells[cite: 17].
                     withSonarQube(installation: 'SonarQube Local', branch: 'main') {
-                        // Use 'bat' for Windows native commands.
-                        bat "\"${SONAR_SCANNER_HOME}\\bin\\sonar-scanner.bat\" " +
-                            "-Dsonar.projectKey=${SONAR_PROJECT_KEY} " +
-                            "-Dsonar.sources=. " +
-                            "-Dsonar.host.url=${env.SONARQUBE_URL} " +
-                            "-Dsonar.login=${env.SONARQUBE_TOKEN}"
+                        // Use 'withCredentials' to securely inject your SonarQube authentication token.
+                        // 'sonarqube-server-token' should be the ID of your 'Secret text' credential in Jenkins.
+                        withCredentials([string(credentialsId: 'sonarqube-server-token', variable: 'SONARQUBE_TOKEN')]) {
+                            // Use 'bat' for Windows native commands.
+                            bat "\"${SONAR_SCANNER_HOME}\\bin\\sonar-scanner.bat\" " +
+                                "-Dsonar.projectKey=${SONAR_PROJECT_KEY} " +
+                                "-Dsonar.sources=. " +
+                                "-Dsonar.host.url=${env.SONARQUBE_URL} " + // Now explicitly defined in stage environment
+                                "-Dsonar.login=${SONARQUBE_TOKEN}" // Token injected securely via withCredentials
+                        }
                     }
                     echo 'SonarQube analysis complete. Check SonarQube dashboard for results.'
                 }
