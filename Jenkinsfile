@@ -16,7 +16,7 @@ pipeline {
                     echo 'Cloning the Git repository...'
                     // Replace 'github-credentials' with your actual credential ID if private, otherwise remove credentialsId if public.
                     // The image_a0b65d.png shows 'https://github.com/gtldpen/cybersecurity-website.git' as the Repository URL.
-                    git branch: 'main', credentialsId: 'github-credentials', url: 'https://github.com/gtldpen/cybersecurity-website.git'
+                    git branch: 'main', credentialsId: 'github-credentials', url: 'https://github.com/gitdipen/cybersecurity-website.git'
                 }
             }
         }
