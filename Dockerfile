@@ -1,14 +1,11 @@
-# Use a lightweight Nginx base image
+# Use an official Nginx base image
 FROM nginx:alpine
 
-# Copy your static website files into the Nginx default web directory
-# Assuming your index.html, css/, and js/ are directly in the root of your repo
-COPY index.html /usr/share/nginx/html/index.html
-COPY css/ /usr/share/nginx/html/css/
-COPY js/ /usr/share/nginx/html/js/
+# Copy the static website files into the Nginx HTML directory
+COPY . /usr/share/nginx/html
 
-# Expose the port Nginx listens on (default is 80)
+# Expose port 80 (default for HTTP)
 EXPOSE 80
 
-# Command to run Nginx in the foreground
+# Command to run Nginx when the container starts
 CMD ["nginx", "-g", "daemon off;"]
