@@ -20,8 +20,9 @@ pipeline {
             steps {
                 script {
                     echo "Installing Node.js backend dependencies in './backend'..."
-                    // Changed 'sh' to 'bat' for Windows compatibility
-                    bat 'npm install --prefix ./backend --production'
+                    // Corrected for Windows Batch (bat) to change directory and then run npm install
+                    bat 'cd backend && npm install --production'
+                    echo "Backend dependencies installed." // Added echo for confirmation
                 }
             }
         }
@@ -48,12 +49,11 @@ pipeline {
                 script {
                     echo "Running code quality analysis with SonarQube..."
                     withSonarQubeEnv("${SONARQUBE_SERVER}") {
-                        // Changed 'sh' to 'bat' for Windows compatibility
-                        // Ensure sonar-scanner and dependency-check are in Jenkins agent's PATH
+                        // Using 'bat' for Windows compatibility. Ensure sonar-scanner is in Jenkins agent's PATH
                         bat 'sonar-scanner -Dsonar.projectKey=cybersecurity-website -Dsonar.sources=./backend,./css,./js,./index.html'
                     }
                     echo "Running Dependency-Check for known vulnerabilities..."
-                    // Changed 'sh' to 'bat' for Windows compatibility
+                    // Using 'bat' for Windows compatibility. '|| true' handles non-zero exit codes (e.g., vulnerabilities found)
                     bat 'dependency-check --scan . --format HTML --output ./dependency-check-report.html || true'
                     echo "Code quality and dependency scans completed."
                 }
@@ -63,7 +63,7 @@ pipeline {
             steps {
                 script {
                     echo "Running Docker image security scan with Trivy..."
-                    // Changed 'sh' to 'bat' for Windows compatibility
+                    // Using 'bat' for Windows compatibility. Trivy must be installed on your Jenkins agent.
                     bat "trivy image --severity HIGH,CRITICAL ${DOCKER_IMAGE}:latest || true"
                     echo "Docker image security scan completed."
                 }
@@ -73,12 +73,12 @@ pipeline {
             steps {
                 script {
                     echo "Stopping and removing existing container (if any) with name ${DOCKER_CONTAINER_NAME}..."
-                    // Changed 'sh' to 'bat' for Windows compatibility
+                    // Using 'bat' for Windows compatibility. '|| true' prevents failure if container doesn't exist.
                     bat "docker stop ${DOCKER_CONTAINER_NAME} || true"
                     bat "docker rm ${DOCKER_CONTAINER_NAME} || true"
 
                     echo "Deploying Docker image to local test environment on http://localhost:${APP_PORT}..."
-                    // Changed 'sh' to 'bat' for Windows compatibility
+                    // Using 'bat' for Windows compatibility.
                     bat "docker run -d -p ${APP_PORT}:${APP_PORT} --name ${DOCKER_CONTAINER_NAME} ${DOCKER_IMAGE}:latest"
                     echo "Application deployed to http://localhost:${APP_PORT}"
                 }
@@ -88,7 +88,7 @@ pipeline {
             steps {
                 script {
                     echo "Simulating release activities (e.g., tagging Docker image, pushing to Docker Hub)..."
-                    // If you add actual commands here, remember to use 'bat'
+                    // If you add actual commands here, remember to use 'bat' for Windows compatibility
                     // bat "docker tag ..."
                     // bat "docker push ..."
                 }
@@ -98,11 +98,9 @@ pipeline {
             steps {
                 script {
                     echo "Performing application health check via API endpoint..."
-                    sleep 15 // Wait for 15 seconds
-                    // Changed 'sh' to 'bat' for Windows compatibility
-                    // On Windows, 'curl' might not be natively available or might require 'Invoke-WebRequest' (PowerShell).
-                    // However, newer Windows 10/11 versions often have a curl alias.
-                    // If 'curl' fails, you might need to use PowerShell or download a curl executable.
+                    sleep 15 // Wait for 15 seconds to ensure the container is fully up
+                    // Using 'bat' for Windows compatibility.
+                    // 'curl' on Windows (newer versions) should work. If not, consider 'powershell "Invoke-WebRequest ..."'
                     bat "curl -f http://localhost:${APP_PORT}/api/health"
                     echo "Application health check passed via API endpoint. Server is responsive."
                 }
