@@ -15,9 +15,9 @@ header {
 
 main {
     padding: 20px;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
+    display: flex; /* Keep flex to center the single column */
+    flex-direction: column; /* Stack items vertically */
+    align-items: center; /* Center items horizontally in the column */
     gap: 20px;
 }
 
@@ -26,7 +26,9 @@ main {
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     padding: 20px;
-    width: 300px;
+    /* Adjusted for one-by-one layout */
+    width: 100%; /* Take full width of the parent flex item */
+    max-width: 600px; /* Limit maximum width for readability on large screens */
     text-align: center;
 }
 
@@ -55,7 +57,7 @@ footer {
     color: #fff;
     text-align: center;
     padding: 15px 0;
-    position: relative;
+    position: relative; /* Changed from fixed or absolute to relative */
     bottom: 0;
     width: 100%;
 }
