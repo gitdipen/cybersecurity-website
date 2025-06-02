@@ -12,6 +12,7 @@ pipeline {
         stage('Checkout SCM') {
             steps {
                 echo 'Checking out source code from Git...'
+                // Git step is cross-platform, so 'git' command works as is.
                 git branch: 'main', url: 'https://github.com/gitdipen/cybersecurity-website.git'
             }
         }
@@ -19,8 +20,8 @@ pipeline {
             steps {
                 script {
                     echo "Installing Node.js backend dependencies in './backend'..."
-                    // Install production dependencies for your backend
-                    sh 'npm install --prefix ./backend --production'
+                    // Changed 'sh' to 'bat' for Windows compatibility
+                    bat 'npm install --prefix ./backend --production'
                 }
             }
         }
@@ -28,8 +29,8 @@ pipeline {
             steps {
                 script {
                     echo "Building Docker image: ${DOCKER_IMAGE}:latest"
-                    // The '.' at the end means Dockerfile is in the current directory (project root)
-                    sh "docker build -t ${DOCKER_IMAGE}:latest ."
+                    // Docker commands generally work directly with 'bat' or 'sh' if Docker CLI is in PATH
+                    bat "docker build -t ${DOCKER_IMAGE}:latest ."
                 }
             }
         }
@@ -39,8 +40,6 @@ pipeline {
                     echo "No complex unit tests implemented for this simplified approach due to time constraints."
                     echo "Frontend is static, backend serves files and a health check."
                     echo "Testing will focus on successful deployment and health check availability."
-                    // You could add simple linting here if you had ESLint configured for JS
-                    // sh 'npx eslint ./js'
                 }
             }
         }
@@ -48,16 +47,14 @@ pipeline {
             steps {
                 script {
                     echo "Running code quality analysis with SonarQube..."
-                    // Use withSonarQubeEnv to apply SonarQube configuration from Jenkins
                     withSonarQubeEnv("${SONARQUBE_SERVER}") {
-                        // Scan both the new backend code and your existing static files
-                        // sonar.sources defines which directories/files SonarQube should analyze
-                        sh 'sonar-scanner -Dsonar.projectKey=cybersecurity-website -Dsonar.sources=./backend,./css,./js,./index.html'
+                        // Changed 'sh' to 'bat' for Windows compatibility
+                        // Ensure sonar-scanner and dependency-check are in Jenkins agent's PATH
+                        bat 'sonar-scanner -Dsonar.projectKey=cybersecurity-website -Dsonar.sources=./backend,./css,./js,./index.html'
                     }
                     echo "Running Dependency-Check for known vulnerabilities..."
-                    // Scans all project dependencies, including backend's node_modules
-                    // '|| true' makes the step succeed even if vulnerabilities are found, to allow pipeline to continue
-                    sh 'dependency-check --scan . --format HTML --output ./dependency-check-report.html || true'
+                    // Changed 'sh' to 'bat' for Windows compatibility
+                    bat 'dependency-check --scan . --format HTML --output ./dependency-check-report.html || true'
                     echo "Code quality and dependency scans completed."
                 }
             }
@@ -66,9 +63,8 @@ pipeline {
             steps {
                 script {
                     echo "Running Docker image security scan with Trivy..."
-                    // Trivy must be installed on your Jenkins agent.
-                    // `--severity HIGH,CRITICAL` filters results to high-impact vulnerabilities.
-                    sh "trivy image --severity HIGH,CRITICAL ${DOCKER_IMAGE}:latest || true"
+                    // Changed 'sh' to 'bat' for Windows compatibility
+                    bat "trivy image --severity HIGH,CRITICAL ${DOCKER_IMAGE}:latest || true"
                     echo "Docker image security scan completed."
                 }
             }
@@ -77,16 +73,13 @@ pipeline {
             steps {
                 script {
                     echo "Stopping and removing existing container (if any) with name ${DOCKER_CONTAINER_NAME}..."
-                    // Stop and remove existing container to prevent 'Conflict' error.
-                    // '|| true' ensures the step doesn't fail if the container doesn't exist (e.g., first run).
-                    sh "docker stop ${DOCKER_CONTAINER_NAME} || true"
-                    sh "docker rm ${DOCKER_CONTAINER_NAME} || true"
+                    // Changed 'sh' to 'bat' for Windows compatibility
+                    bat "docker stop ${DOCKER_CONTAINER_NAME} || true"
+                    bat "docker rm ${DOCKER_CONTAINER_NAME} || true"
 
                     echo "Deploying Docker image to local test environment on http://localhost:${APP_PORT}..."
-                    // -d: Run in detached mode (background)
-                    // -p: Publish container's port to host's port (host_port:container_port)
-                    // --name: Assign a name to the container
-                    sh "docker run -d -p ${APP_PORT}:${APP_PORT} --name ${DOCKER_CONTAINER_NAME} ${DOCKER_IMAGE}:latest"
+                    // Changed 'sh' to 'bat' for Windows compatibility
+                    bat "docker run -d -p ${APP_PORT}:${APP_PORT} --name ${DOCKER_CONTAINER_NAME} ${DOCKER_IMAGE}:latest"
                     echo "Application deployed to http://localhost:${APP_PORT}"
                 }
             }
@@ -95,9 +88,9 @@ pipeline {
             steps {
                 script {
                     echo "Simulating release activities (e.g., tagging Docker image, pushing to Docker Hub)..."
-                    // This stage is typically for pushing to a production registry like Docker Hub
-                    // Example: sh "docker tag ${DOCKER_IMAGE}:latest your_registry/repo/${DOCKER_IMAGE}:$(git rev-parse --short HEAD)"
-                    // Example: sh "docker push your_registry/repo/${DOCKER_IMAGE}:latest"
+                    // If you add actual commands here, remember to use 'bat'
+                    // bat "docker tag ..."
+                    // bat "docker push ..."
                 }
             }
         }
@@ -105,11 +98,12 @@ pipeline {
             steps {
                 script {
                     echo "Performing application health check via API endpoint..."
-                    // Give the container some time to start up and the Node.js server to be ready
                     sleep 15 // Wait for 15 seconds
-                    // Use curl to hit the new /api/health endpoint.
-                    // '-f' makes curl fail if the HTTP status code is 4xx or 5xx, ensuring the stage fails on error.
-                    sh "curl -f http://localhost:${APP_PORT}/api/health"
+                    // Changed 'sh' to 'bat' for Windows compatibility
+                    // On Windows, 'curl' might not be natively available or might require 'Invoke-WebRequest' (PowerShell).
+                    // However, newer Windows 10/11 versions often have a curl alias.
+                    // If 'curl' fails, you might need to use PowerShell or download a curl executable.
+                    bat "curl -f http://localhost:${APP_PORT}/api/health"
                     echo "Application health check passed via API endpoint. Server is responsive."
                 }
             }
@@ -124,17 +118,14 @@ pipeline {
     }
     post {
         always {
-            // Ensure the Jenkins workspace is cleaned up after every build, regardless of success or failure.
             cleanWs()
             echo "Workspace cleaned."
         }
         success {
             echo 'Pipeline completed successfully!'
-            // Add success-specific notifications (e.g., Slack, email)
         }
         failure {
             echo 'Pipeline failed! Please check logs for details.'
-            // Add failure-specific notifications (e.g., critical alerts)
         }
     }
 }
