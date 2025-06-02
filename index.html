@@ -7,8 +7,11 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <header>
-        <h1>Stay Secure Online</h1>
+    <header id="home">
+        <div class="header-content">
+            <span class="terminal-cursor">_</span>
+            <h1>Stay Secure Online</h1>
+        </div>
     </header>
 
     <nav>
@@ -21,49 +24,107 @@
     </nav>
 
     <section class="description-section">
-        <p>In today's digital world, understanding cybersecurity is more crucial than ever. Our mission is to empower you with the knowledge and tools to protect yourself, your data, and your privacy online. Explore our resources to learn about common cyber threats and how to mitigate them.</p>
+        <p>
+            <h1><i>Cybersecurity Awareness: Protecting Your Digital Life</i></h1>
+            <h2>
+                In today's digital world, understanding cybersecurity is more crucial than ever. Our mission is to empower you with the knowledge and tools to protect yourself, your data, and your privacy online. Explore our resources to learn about common cyber threats and how to mitigate them.
+            </h2>
+        </p>
     </section>
 
-    <main>
+    <main id="topics">
         <section class="info-card">
             <h2>Phishing Attacks</h2>
             <p>Learn to identify and avoid deceptive emails and messages designed to steal your information.</p>
-            <button onclick="alert('More info on Phishing coming soon!')">Read More</button>
+            <button class="read-more-btn"
+                    data-title="Phishing Attacks"
+                    data-paragraph="Phishing attacks are a type of social engineering where attackers impersonate a trustworthy entity to trick individuals into revealing sensitive information, such as passwords, credit card numbers, or personal data. These attacks often come through emails, text messages, or malicious websites."
+                    data-example="You receive an email that looks like it's from your bank, asking you to click a link to verify your account due to 'suspicious activity.' The link leads to a fake website that looks identical to your bank's login page.">Read More</button>
         </section>
         <section class="info-card">
             <h2>Strong Passwords</h2>
             <p>Discover best practices for creating and managing strong, unique passwords for all your accounts.</p>
-            <button onclick="alert('More info on Passwords coming soon!')">Read More</button>
+            <button class="read-more-btn"
+                    data-title="Strong Passwords"
+                    data-paragraph="Strong passwords are crucial for cybersecurity. They should be long, complex, and unique for every online account. Using a combination of uppercase and lowercase letters, numbers, and symbols significantly increases security. Password managers are highly recommended to create and store these complex passwords securely."
+                    data-example="Instead of 'password123', use a phrase like 'My@SecureL@ptoP_2025!' or a randomly generated string like 'Jg8#p!S$9dFwQzP_5Y'.">Read More</button>
         </section>
         <section class="info-card">
             <h2>Software Updates</h2>
             <p>Understand why keeping your software updated is crucial for patching vulnerabilities and protecting your system.</p>
-            <button onclick="alert('More info on Updates coming soon!')">Read More</button>
+            <button class="read-more-btn"
+                    data-title="Software Updates"
+                    data-paragraph="Regularly updating your software, operating systems, and applications is vital for cybersecurity. Updates often include patches for newly discovered security vulnerabilities that could otherwise be exploited by attackers. Delaying updates leaves your systems exposed to known threats."
+                    data-example="A software company releases an urgent update for its operating system because a critical bug was found that allows remote code execution. If you don't install the update, your computer remains vulnerable to attacks exploiting that bug.">Read More</button>
         </section>
         <section class="info-card">
             <h2>Multi-Factor Authentication</h2>
             <p>Enhance your account security by requiring multiple verification methods for login.</p>
-            <button onclick="alert('More info on MFA coming soon!')">Read More</button>
+            <button class="read-more-btn"
+                    data-title="Multi-Factor Authentication (MFA)"
+                    data-paragraph="Multi-Factor Authentication (MFA), also known as two-factor authentication (2FA), adds an extra layer of security beyond just a password. It requires users to provide two or more verification factors to gain access to an account, such as something you know (password), something you have (phone, token), or something you are (fingerprint)."
+                    data-example="When logging into your email, after entering your password, you also receive a code via SMS to your phone, which you must enter to complete the login process.">Read More</button>
         </section>
         <section class="info-card">
             <h2>Secure Wi-Fi Usage</h2>
             <p>Learn how to safely connect to public and private Wi-Fi networks to protect your data.</p>
-            <button onclick="alert('More info on Wi-Fi Security coming soon!')">Read More</button>
+            <button class="read-more-btn"
+                    data-title="Secure Wi-Fi Usage"
+                    data-paragraph="Using Wi-Fi securely, especially public Wi-Fi, is essential to protect your data. Public networks are often unsecured, making it easy for attackers to intercept your traffic. Always use a Virtual Private Network (VPN) when connecting to public Wi-Fi to encrypt your data and prevent eavesdropping. Be cautious about accessing sensitive information on public networks."
+                    data-example="You're at a coffee shop using their free Wi-Fi. Without a VPN, an attacker on the same network could potentially use 'packet sniffing' tools to see the unencrypted data you're sending, like login credentials for websites.">Read More</button>
         </section>
         <section class="info-card">
             <h2>Data Backup</h2>
             <p>Understand the importance of regularly backing up your important data to prevent loss from cyber incidents.</p>
-            <button onclick="alert('More info on Data Backup coming soon!')">Read More</button>
+            <button class="read-more-btn"
+                    data-title="Data Backup"
+                    data-paragraph="Regular data backup is a critical component of any cybersecurity strategy. In the event of a cyberattack (like ransomware), hardware failure, or accidental deletion, having recent backups ensures that you can recover your important files and continue operations without significant data loss. Follow the 3-2-1 backup rule: 3 copies of your data, 2 different media types, 1 offsite copy."
+                    data-example="Your computer gets infected with ransomware, encrypting all your documents. If you have a recent backup stored on an external hard drive or cloud service, you can wipe your computer and restore your files from the backup, avoiding the need to pay the ransom.">Read More</button>
         </section>
         <section class="info-card">
             <h2>Social Engineering</h2>
             <p>Recognize common social engineering tactics used by attackers to trick you into revealing information.</p>
-            <button onclick="alert('More info on Social Engineering coming soon!')">Read More</button>
+            <button class="read-more-btn"
+                    data-title="Social Engineering"
+                    data-paragraph="Social engineering is a manipulation technique that exploits human error to gain private information, access, or valuables. Attackers use psychological manipulation to trick users into divulging confidential information or performing actions that benefit the attacker. It's often the first step in a larger attack."
+                    data-example="You receive a phone call from someone pretending to be IT support, claiming there's a problem with your computer. They ask you to install 'remote access software' or provide your login credentials to 'fix' the issue, but in reality, they're gaining access to your system.">Read More</button>
         </section>
     </main>
+
+    <div class="additional-sections-container">
+        <section id="about" class="enhanced-section">
+            <h2>About Us</h2>
+            <p>We are dedicated to fostering a safer digital environment through education and awareness. Our platform provides up-to-date information on cybersecurity threats and best practices to help individuals and organizations protect their valuable data.</p>
+            <p>Our mission is to empower you with the knowledge and tools to navigate the complex world of online security with confidence.</p>
+        </section>
+
+        <section id="contact" class="enhanced-section">
+            <h2>Contact Us</h2>
+            <p>Have questions, feedback, or suggestions? We'd love to hear from you!</p>
+            <p>Email: <a href="mailto:test@mail.com" style="color: var(--text-primary); text-decoration: none;">test@mail.com</a></p>
+            <p>Connect with us:</p>
+            <p>Github: <a href="https://github.com/gitdipen/cybersecurity-website/" style="color: var(--text-primary); text-decoration: none;">Github</a></p>
+        </section>
+    </div>
+
     <footer>
-        <p>&copy; 2025 Cybersecurity Awareness. All rights reserved. Developed by Dipen Thaker</p>
+        <p>&copy; 2025 Cybersecurity Awareness. Dipen Thaker</p>
     </footer>
+
+    <div id="infoModal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="modal-close-button">&times;</span>
+            <div class="modal-header">
+                <h2 id="modalTitle"></h2>
+            </div>
+            <div class="modal-body">
+                <p id="modalParagraph"></p>
+                <h3>Example:</h3>
+                <p id="modalExample"></p>
+            </div>
+        </div>
+    </div>
+
     <script src="js/script.js"></script>
 </body>
 </html>
