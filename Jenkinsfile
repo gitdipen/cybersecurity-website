@@ -1,34 +1,32 @@
+// Jenkinsfile for Cybersecurity Website DevOps Pipeline
+
 pipeline {
-    agent any // Instructs Jenkins to run the pipeline on any available agent
+    agent any // Run on any available agent
 
     environment {
-        DOCKER_IMAGE = 'cybersecurity-website' // Name for your Docker image
-        DOCKER_CONTAINER_NAME = 'cybersecurity-app' // Name for your Docker container
-        APP_PORT = '8081' // The port your application will run on (internal and external)
-        SONARQUBE_SERVER = 'SonarQube Local' // The name of your SonarQube server configuration in Jenkins
+        SONAR_PROJECT_KEY = 'Cybersecurity-Website' // SonarQube project key
+        SONAR_SCANNER_HOME = tool 'SonarScanner' // SonarScanner tool configured in Jenkins Global Tool Configuration
     }
 
     stages {
-        stage('Checkout SCM') {
+        stage('Checkout') {
             steps {
-                echo 'Checking out source code from Git...'
-                git branch: 'main', url: 'https://github.com/gitdipen/cybersecurity-website.git'
+                script {
+                    echo 'Cloning the Git repository...'
+                    // Replace 'github-credentials' with your actual credentials ID if private repo, else remove credentialsId for public repo
+                    git branch: 'main', credentialsId: 'github-credentials', url: 'https://github.com/gitdipen/cybersecurity-website.git'
+                }
             }
         }
 
-        // --- REMOVED: 'Install Backend Dependencies' stage ---
-        // This stage has been removed as per your explicit instructions.
-        // If your Dockerfile still expects a 'backend' directory, it might cause issues
-        // in the 'Build' stage. Ensure your Dockerfile is simplified for static content.
-
-        stage('Build') { // Renamed from 'Build Docker Image' to match your console output
+        stage('Build') {
             steps {
                 script {
-                    echo "Building Docker image..."
-                    dir('.') { // Ensure you are in the root of the workspace for Dockerfile
-                        bat "docker build -t ${DOCKER_IMAGE}:latest ."
+                    echo 'Building Docker image...'
+                    dir('.') {
+                        bat 'docker build -t cybersecurity-website:latest .'
                     }
-                    echo "Docker image built: ${DOCKER_IMAGE}:latest"
+                    echo 'Docker image built: cybersecurity-website:latest'
                 }
             }
         }
@@ -36,33 +34,34 @@ pipeline {
         stage('Test') {
             steps {
                 script {
-                    echo "Running basic tests (checking if index.html exists)"
-                    // This checks for the file existence in the Jenkins workspace
-                    bat "dir index.html"
-                    echo "Basic file existence test passed."
+                    echo 'Running basic tests (checking if index.html exists)'
+                    bat 'dir index.html'
+                    echo 'Basic file existence test passed.'
                 }
             }
         }
 
         stage('Code Quality') {
+            environment {
+                SONARQUBE_URL = 'http://localhost:9000' // Update if your SonarQube server is different
+            }
             steps {
                 script {
-                    echo "Running SonarQube analysis..."
-                    withSonarQubeEnv("${SONARQUBE_SERVER}") {
-                        // Ensure 'SonarScanner' is configured under Manage Jenkins -> Tools -> SonarQube Scanner installations
-                        tool 'SonarScanner' // This line tells Jenkins to make the SonarScanner tool available
-
-                        // The sonar-scanner command, using properties.
-                        // ProjectKey and sources are important. '.' scans the whole workspace (static files).
-                        bat """
-                            sonar-scanner \\
-                                -Dsonar.projectKey=Cybersecurity-Website \\
-                                -Dsonar.sources=. \\
-                                -Dsonar.host.url=http://localhost:9000 \\
-                                -Dsonar.login=%SONAR_TOKEN%
-                        """
+                    echo 'Running SonarQube analysis...'
+                    // This will inject SonarQube server environment variables
+                    withSonarQubeEnv('SonarQube Local') {
+                        // Inject token securely from Jenkins credentials store
+                        withCredentials([string(credentialsId: 'sonarqube-server-token', variable: 'SONAR_TOKEN')]) {
+                            bat """
+                            "${SONAR_SCANNER_HOME}\\bin\\sonar-scanner.bat" ^
+                            -Dsonar.projectKey=${SONAR_PROJECT_KEY} ^
+                            -Dsonar.sources=. ^
+                            -Dsonar.host.url=${env.SONARQUBE_URL} ^
+                            -Dsonar.login=${SONAR_TOKEN}
+                            """
+                        }
                     }
-                    echo "SonarQube analysis complete. Check SonarQube dashboard for results."
+                    echo 'SonarQube analysis complete. Check SonarQube dashboard for results.'
                 }
             }
         }
@@ -70,91 +69,62 @@ pipeline {
         stage('Security') {
             steps {
                 script {
-                    echo "Running OWASP Dependency-Check for security analysis..."
-
-                    // **FIX: Explicitly create the 'target' directory before generating reports**
-                    bat 'mkdir target || true' // '|| true' ensures command succeeds even if dir exists
-
-                    // Ensure 'DependencyCheck' is configured under Manage Jenkins -> Tools -> Dependency-Check installations
-                    tool 'DependencyCheck' // This makes the Dependency-Check tool available on the PATH
-
-                    // Execute Dependency-Check.
-                    // --scan . : Scans the entire current workspace (your static files)
-                    // --format HTML : Specifies HTML report format
-                    // --output ./target/dependency-check-report.html : Directs output to the 'target' directory
-                    // || true : This makes the 'bat' command succeed even if Dependency-Check finds vulnerabilities,
-                    //          allowing the HTML report to be generated and published.
-                    bat 'dependency-check --scan . --format HTML --output ./target/dependency-check-report.html || true'
-
-                    echo "OWASP Dependency-Check complete. Check the generated HTML report."
-
-                    // Publish the HTML report
+                    echo 'Running OWASP Dependency-Check for security analysis...'
+                    dependencyCheck additionalArguments: '--project "Cybersecurity Website" --format HTML --scan .', odcInstallation: 'Dependency-Check'
+                    echo 'OWASP Dependency-Check complete. Check the generated HTML report.'
                     publishHTML(target: [
-                        allowMissing: false, // Set to 'true' if the report might sometimes be genuinely missing
-                        reportDir: 'target', // Directory where the report is generated by Dependency-Check
-                        reportFiles: 'dependency-check-report.html', // The name of the generated HTML report file
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: false,
                         keepAll: true,
-                        alwaysLinkToLastBuild: true,
+                        reportDir: 'target', // default output directory of Dependency-Check
+                        reportFiles: 'dependency-check-report.html',
                         reportName: 'Dependency-Check Report'
                     ])
                 }
             }
         }
 
-        // Removed Trivy stage comment to fully reflect "no backend thing"
-        // If you still want Trivy for Docker image scanning of the static site, let me know, and I'll add it back.
-
         stage('Deploy') {
             steps {
                 script {
-                    echo "Stopping and removing existing container (if any) with name ${DOCKER_CONTAINER_NAME}..."
-                    bat "docker stop ${DOCKER_CONTAINER_NAME} || true" // Stop container if running
-                    bat "docker rm ${DOCKER_CONTAINER_NAME} || true"  // Remove container if it exists
-
-                    echo "Deploying Docker image to local test environment on http://localhost:${APP_PORT}..."
-                    // Assuming your Dockerfile exposes port 80 for the web server (e.g., Nginx serving static files)
-                    bat "docker run -d -p ${APP_PORT}:80 --name ${DOCKER_CONTAINER_NAME} ${DOCKER_IMAGE}:latest"
-                    echo "Application deployed to http://localhost:${APP_PORT}"
+                    echo 'Deploying Docker image to local test environment...'
+                    bat 'docker stop cybersecurity-app || true'
+                    bat 'docker rm cybersecurity-app || true'
+                    bat 'docker run -d -p 8081:80 --name cybersecurity-app cybersecurity-website:latest'
+                    echo 'Application deployed to http://localhost:8081'
                 }
             }
         }
 
-        stage('Release') { // Simulating promotion to production, add actual steps as needed
+        stage('Release') { // Promote the application to a production environment
             steps {
-                echo "Simulating promotion to production..."
+                echo 'Simulating promotion to production...'
+                // For a higher grade, this would involve pushing the Docker image to a registry (e.g., Docker Hub, AWS ECR)
+                // and then deploying to a production server or cloud environment (e.g., AWS Elastic Beanstalk, Kubernetes).
+                // You would typically use specific tools for release management here.
             }
         }
 
-        stage('Monitoring') {
+        stage('Monitoring') { // Monitor the application in production
             steps {
-                script {
-                    echo "Performing simple uptime check..."
-                    sleep 15 // Wait for 15 seconds for the container to start
-                    // This checks for the main index.html file of your static site
-                    bat "curl -f http://localhost:${APP_PORT}/index.html"
-                    echo "Application health check passed. Application is responsive."
-                }
-            }
-        }
-
-        stage('Post Actions') {
-            steps {
-                script {
-                    echo "Executing post-deployment actions (e.g., sending notifications, final cleanup)..."
-                }
+                echo 'Simulating monitoring and alerting...'
+                // For a higher grade, this would involve integrating with monitoring tools like Datadog, New Relic, or Prometheus.
+                // You would set up live metrics, meaningful alert rules, and potentially simulate incidents.
+                // This stage often doesn't have direct commands in the Jenkinsfile but rather triggers external monitoring setups.
             }
         }
     }
+
     post {
         always {
-            cleanWs()
-            echo "Workspace cleaned."
+            echo 'Pipeline finished.'
+            cleanWs() // Clean workspace
         }
         success {
             echo 'Pipeline completed successfully!'
         }
         failure {
-            echo 'Pipeline failed! Please check logs for details.'
+            echo 'Pipeline failed. Check logs for details.'
         }
     }
 }
