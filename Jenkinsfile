@@ -96,22 +96,23 @@ pipeline {
             }
         }
 
-        // Optional stages for higher HD grades (commented out)
-        /*
-        stage('Release') {
+        stage('Release') { // Promote the application to a production environment
             steps {
                 echo 'Simulating promotion to production...'
-                // Push Docker image to registry and deploy to production environment
+                // For a higher grade, this would involve pushing the Docker image to a registry (e.g., Docker Hub, AWS ECR)
+                // and then deploying to a production server or cloud environment (e.g., AWS Elastic Beanstalk, Kubernetes).
+                // You would typically use specific tools for release management here.
             }
         }
 
-        stage('Monitoring') {
+        stage('Monitoring') { // Monitor the application in production
             steps {
                 echo 'Simulating monitoring and alerting...'
-                // Integrate with monitoring tools like Datadog or New Relic
+                // For a higher grade, this would involve integrating with monitoring tools like Datadog, New Relic, or Prometheus.
+                // You would set up live metrics, meaningful alert rules, and potentially simulate incidents.
+                // This stage often doesn't have direct commands in the Jenkinsfile but rather triggers external monitoring setups.
             }
         }
-        */
     }
 
     post {
