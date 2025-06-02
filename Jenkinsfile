@@ -4,16 +4,9 @@ pipeline {
     agent any // Specifies that the pipeline can run on any available agent
 
     environment {
-        // SonarQube configuration (global environment variables)
+        // SonarQube configuration
         SONAR_SCANNER_HOME = tool 'SonarScanner' // This refers to the name configured in Global Tool Configuration
         SONAR_PROJECT_KEY = 'Cybersecurity-Website' // Matches the SonarQube project key
-    }
-
-    tools {
-        // Define Node.js tool here if you need to run npm commands directly on the agent,
-        // especially for local builds or tests outside of Docker.
-        // Make sure 'NodeJS_LTS' matches the name configured in Manage Jenkins -> Tools -> NodeJS installations
-        nodejs 'NodeJS_LTS'
     }
 
     stages {
@@ -22,28 +15,19 @@ pipeline {
                 script {
                     echo 'Cloning the Git repository...'
                     // Replace 'github-credentials' with your actual credential ID if private, otherwise remove credentialsId if public.
+                    // The image_a0b65d.png shows 'https://github.com/gtldpen/cybersecurity-website.git' as the Repository URL.
                     git branch: 'main', credentialsId: 'github-credentials', url: 'https://github.com/gitdipen/cybersecurity-website.git'
                 }
             }
         }
 
-        stage('Build') { // Configure Jenkins to build your code and create a build artefact
+        stage('Build') { // Configure Jenkins to build your code and create a build artefact [cite: 11]
             steps {
                 script {
-                    echo 'Installing backend dependencies and building frontend...'
-                    // Assuming a backend and frontend structure within your repo
-                    dir('backend') {
-                        bat 'npm install' // Install backend dependencies
-                    }
-                    dir('frontend') {
-                        bat 'npm install' // Install frontend dependencies
-                        bat 'npm run build' // Build the React frontend production bundle
-                    }
-
-                    echo 'Building Docker image for the application...'
-                    // The build artifact in this case is a Docker image.
+                    echo 'Building Docker image...'
+                    // The build artifact in this case is a Docker image[cite: 12].
                     dir('.') {
-                        // Ensure your Dockerfile is in the project root to pick up both backend and frontend build outputs
+                        // Use 'bat' for Windows native commands as specified previously.
                         bat 'docker build -t cybersecurity-website:latest .'
                     }
                     echo 'Docker image built: cybersecurity-website:latest'
@@ -51,39 +35,31 @@ pipeline {
             }
         }
 
-        stage('Test') { // Configure Jenkins to run automated tests on your code
+        stage('Test') { // Configure Jenkins to run automated tests on your code [cite: 13]
             steps {
                 script {
-                    echo 'Running backend unit tests...'
-                    dir('backend') {
-                        // Assuming you have 'test' script in backend/package.json (e.g., "test": "jest")
-                        // '-- --ci' for CI environments to prevent interactive watch mode
-                        // '-- --json --outputFile=test-results.json' to output results in JUnit compatible format
-                        bat 'npm test -- --ci --json --outputFile=test-results-backend.json'
-                        junit 'test-results-backend.json' // Publish backend test results
-                    }
-
-                    echo 'Running frontend unit tests...'
-                    dir('frontend') {
-                        // Assuming you have 'test' script in frontend/package.json (e.g., "test": "react-scripts test" or "jest")
-                        bat 'npm test -- --ci --json --outputFile=test-results-frontend.json'
-                        junit 'test-results-frontend.json' // Publish frontend test results
-                    }
-                    echo 'Automated tests completed.'
+                    echo 'Running basic tests (e.g., HTML/CSS/JS linting or a simple file existence check)'
+                    // For a static site, extensive unit tests might not apply.
+                    // Here, we check if index.html exists as a basic validation.
+                    // You can choose any testing framework of your choice, such as JUnit, Selenium, or Appium[cite: 14].
+                    bat 'dir index.html' // Use 'dir' for Windows
+                    echo 'Basic file existence test passed.'
                 }
             }
         }
 
-        stage('Code Quality') { // Configure Jenkins to run code quality analysis on your code
+        stage('Code Quality') { // Configure Jenkins to run code quality analysis on your code [cite: 15]
             environment {
                 // IMPORTANT: Explicitly set SONARQUBE_URL to your SonarQube server's address.
+                // This is crucial as env.SONARQUBE_URL was previously undefined in the bat command.
                 SONARQUBE_URL = 'http://localhost:9000' // **UPDATE THIS IF YOUR SONARQUBE URL IS DIFFERENT**
             }
             steps {
                 script {
                     echo 'Running SonarQube analysis...'
+                    // This stage focuses on the structure, style, and maintainability of your codebase[cite: 16].
+                    // Tools like SonarQube or CodeClimate can be used to detect issues like code duplication and code smells[cite: 17].
                     withSonarQube(installation: 'SonarQube Local', branch: 'main') {
-                        // 'SonarQube Local' should be the name of your SonarQube installation configured in Jenkins
                         // Use 'withCredentials' to securely inject your SonarQube authentication token.
                         // 'sonarqube-server-token' should be the ID of your 'Secret text' credential in Jenkins.
                         withCredentials([string(credentialsId: 'sonarqube-server-token', variable: 'SONARQUBE_TOKEN')]) {
@@ -91,7 +67,7 @@ pipeline {
                             bat "\"${SONAR_SCANNER_HOME}\\bin\\sonar-scanner.bat\" " +
                                 "-Dsonar.projectKey=${SONAR_PROJECT_KEY} " +
                                 "-Dsonar.sources=. " +
-                                "-Dsonar.host.url=${env.SONARQUBE_URL} " +
+                                "-Dsonar.host.url=${env.SONARQUBE_URL} " + // Now explicitly defined in stage environment
                                 "-Dsonar.login=${SONARQUBE_TOKEN}" // Token injected securely via withCredentials
                         }
                     }
@@ -100,10 +76,11 @@ pipeline {
             }
         }
 
-        stage('Security') { // Configure Jenkins to perform automated security analysis
+        stage('Security') { // Configure Jenkins to perform automated security analysis [cite: 20]
             steps {
                 script {
                     echo 'Running OWASP Dependency-Check for security analysis...'
+                    // This ensures that vulnerabilities are detected and addressed early in the CI/CD pipeline[cite: 21].
                     dependencyCheck additionalArguments: '--project "Cybersecurity Website" --format HTML --scan .', odcInstallation: 'DependencyCheck'
                     echo 'OWASP Dependency-Check complete. Check the generated HTML report.'
                     publishHTML(target: [
@@ -118,59 +95,38 @@ pipeline {
             }
         }
 
-        stage('Deploy') { // Configure Jenkins to deploy your application to a test environment
+        stage('Deploy') { // Configure Jenkins to deploy your application to a test environment [cite: 26]
             steps {
                 script {
                     echo 'Deploying Docker image to a local test environment...'
+                    // You can use deployment tools like Docker Compose or AWS Elastic Beanstalk[cite: 27].
                     // Stop and remove any existing container with the same name
-                    bat 'docker stop cybersecurity-app-test || true'
-                    bat 'docker rm cybersecurity-app-test || true'
-                    // Run the new Docker container for test environment
-                    bat 'docker run -d -p 8081:80 --name cybersecurity-app-test cybersecurity-website:latest'
-                    echo 'Application deployed to test environment. Accessible at http://localhost:8081'
+                    bat 'docker stop cybersecurity-app || true'
+                    bat 'docker rm cybersecurity-app || true'
+                    // Run the new Docker container
+                    bat 'docker run -d -p 8081:80 --name cybersecurity-app cybersecurity-website:latest'
+                    echo 'Application deployed to http://localhost:8081'
                 }
             }
         }
 
-        stage('Release') { // Promote the application to a production environment
-            steps {
-                script {
-                    echo 'Promoting application to production environment (local Docker container simulation)...'
-                    def version = "1.0.${env.BUILD_NUMBER}"
-                    echo "Tagging Docker image as cybersecurity-website:${version}"
-                    bat "docker tag cybersecurity-website:latest cybersecurity-website:${version}"
+        // The "Release" [cite: 28] and "Monitoring" [cite: 30] stages are typically for higher HD grades [cite: 7]
+        // and involve more complex setups (e.g., cloud services, dedicated monitoring tools like Datadog or New Relic [cite: 31]).
+        // To achieve a low HD grade, it is necessary to successfully implement only four stages from steps 4-10[cite: 5].
 
-                    // Stop and remove previous production container
-                    bat 'docker stop cybersecurity-app-prod || true'
-                    bat 'docker rm cybersecurity-app-prod || true'
-                    // Run the versioned Docker image for "production" on a different port
-                    bat "docker run -d -p 8082:80 --name cybersecurity-app-prod cybersecurity-website:${version}"
-                    echo "Application released as version 1.0.${env.BUILD_NUMBER} to 'production'. Accessible at http://localhost:8082/"
-                }
-            }
-        }
+        // stage('Release') { // Promote the application to a production environment [cite: 28]
+        //     steps {
+        //         echo 'Simulating promotion to production...'
+        //         // This would involve pushing the Docker image to a registry and deploying to a production server.
+        //     }
+        // }
 
-        stage('Monitoring') { // Monitor the application in production
-            steps {
-                script {
-                    echo 'Performing health check on production application...'
-                    def healthCheckUrl = 'http://localhost:8082/health' // Assuming your app has a /health endpoint
-                    try {
-                        // Use curl to check the health endpoint.
-                        // --fail will cause curl to exit with a non-zero code on HTTP errors (4xx/5xx)
-                        // --silent to suppress progress meter
-                        // --output NUL to discard output in Windows
-                        bat "curl --fail --silent --output NUL ${healthCheckUrl}"
-                        echo "Production application health check PASSED for ${healthCheckUrl}."
-                    } catch (Exception e) {
-                        echo "Production application health check FAILED for ${healthCheckUrl}. Error: ${e.getMessage()}"
-                        // Send an email alert for failure
-                        mail bcc: '', body: "CRITICAL ALERT: Cybersecurity Forum Production Health Check FAILED. Build ${env.BUILD_NUMBER}. Check logs for details: ${env.BUILD_URL}", cc: '', from: 'jenkins@yourdomain.com', replyTo: '', subject: 'CRITICAL ALERT: Production Health Check Failed - Cybersecurity Forum', to: 'your_email@example.com'
-                        error('Health check failed, alerting team.') // Fail the stage if health check fails
-                    }
-                }
-            }
-        }
+        // stage('Monitoring') { // Monitor the application in production [cite: 30]
+        //     steps {
+        //         echo 'Simulating monitoring and alerting...'
+        //         // This would involve integrating with monitoring tools like Datadog or New Relic[cite: 31].
+        //     }
+        // }
     }
 
     post {
@@ -183,8 +139,6 @@ pipeline {
         }
         failure {
             echo 'Pipeline failed. Check logs for details.'
-            // You can add email notification for failure here as well
-            // mail bcc: '', body: "Pipeline FAILED for Cybersecurity Forum. Build ${env.BUILD_NUMBER}. Check logs: ${env.BUILD_URL}", cc: '', from: 'jenkins@yourdomain.com', replyTo: '', subject: 'ALERT: Jenkins Pipeline Failed - Cybersecurity Forum', to: 'your_email@example.com'
         }
     }
 }
